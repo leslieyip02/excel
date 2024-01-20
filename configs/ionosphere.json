@@ -1,17 +1,17 @@
 {
     "layers": [
         {
-            "input_size": 3,
-            "output_size": 4,
+            "input_size": 34,
+            "output_size": 32,
             "activation_function": "relu"
         },
         {
-            "input_size": 4,
-            "output_size": 2,
+            "input_size": 32,
+            "output_size": 8,
             "activation_function": "relu"
         },
         {
-            "input_size": 2,
+            "input_size": 8,
             "output_size": 2,
             "activation_function": "softmax"
         }

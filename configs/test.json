@@ -1,0 +1,19 @@
+{
+    "layers": [
+        {
+            "input_size": 3,
+            "output_size": 3,
+            "activation_function": "relu"
+        },
+        {
+            "input_size": 3,
+            "output_size": 3,
+            "activation_function": "relu"
+        },
+        {
+            "input_size": 3,
+            "output_size": 2,
+            "activation_function": "softmax"
+        }
+    ]
+}

@@ -6,7 +6,6 @@ import win32com.client
 from nn.layer import *
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
-from openpyxl.utils.dataframe import dataframe_to_rows
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
@@ -23,8 +22,9 @@ class Network():
         config_path: str,
         random_state: int,
     ) -> None:
-        self.wb = Workbook()
-        self.wb.active.title = 'Training Data'
+        self.wb = load_workbook('template.xlsm', keep_vba=True)
+        self.wb.active.title = 'Main'
+        self.wb.create_sheet('Training Data')
         self.wb.create_sheet('Test Data')
         self.random_state = random_state
         self.filename = csv_path.split('/')[-1].replace('.csv', '')
@@ -38,6 +38,8 @@ class Network():
 
     def init_data(self, csv_path: str):
         df = pd.read_csv(csv_path)
+        self.input_size = df.shape[1] - 1
+
         X = df.iloc[:, :-1].apply(pd.to_numeric)
         y = df.iloc[:, -1].apply(pd.to_numeric)
         X_train, X_test, y_train, y_test = train_test_split(
@@ -60,7 +62,14 @@ class Network():
     def init_layers(self, config_path):
         config = json.load(open(config_path))
         self.layers = []
+        max_input_size = 0
+        previous_layer_output_size = self.input_size
         for i, config in tqdm(enumerate(config['layers']), desc='Initializing weights'):
+            max_input_size = max(config['input_size'], max_input_size)
+            if config['input_size'] != previous_layer_output_size:
+                raise ValueError('Bad input_size/output_size.')
+            previous_layer_output_size = config['output_size']
+
             sheet = self.wb.create_sheet(f'Layer_{i + 1}')
             layer = Layer(config)
             rows = [list(row) for row in layer.weights]
@@ -69,8 +78,14 @@ class Network():
             self.layers.append(layer)
 
         self.wb.create_sheet('Bias')
-        for layer in self.layers:
-            self.wb['Bias'].append([layer.bias])
+        for i, layer in enumerate(self.layers):
+            for j, bias in enumerate(layer.bias):
+                self.wb['Bias'].cell(row=(j + 1), column=(i + 1)).value = bias
+
+        for i in range(len(self.layers)):
+            self.wb.create_sheet(f'A_{i + 1}')
+        for i in range(len(self.layers)):
+            self.wb.create_sheet(f'Z_{i + 1}')
 
     def init_predictions(self):
         train_predictions = self.wb.copy_worksheet(self.wb['Training Data'])
@@ -86,9 +101,19 @@ class Network():
             test_predictions.column_dimensions[column].hidden = True
 
     def inject_macros(self):
-        macros = [layer.macro for layer in self.layers]
-        with open('macros/evaluate.vba', 'r') as file:
-            macros.append(file.read())
+        macros = []
+
+        # inject constants
+        funct_types = [str(layer.macro) for layer in self.layers]
+        constants = (f'Public FunctType({len(self.layers)}) As Integer\n'
+                     f'Sub InitFunctType()\n'
+                     f'    FunctType = Array({",".join(funct_types)})\n'
+                     f'End Sub')
+        macros.append(constants)
+
+        for file in os.listdir('macros'):
+            with open(f'macros/{file}', 'r') as file:
+                macros.append(file.read())
 
         _file = os.path.abspath(sys.argv[0])
         path = os.path.join(os.path.dirname(_file), f'{self.filename}.xlsm')
