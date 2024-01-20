@@ -5,6 +5,7 @@ import pandas as pd
 import win32com.client
 from nn.layer import *
 from openpyxl import Workbook, load_workbook
+from openpyxl.utils import get_column_letter
 from openpyxl.utils.dataframe import dataframe_to_rows
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
@@ -30,15 +31,17 @@ class Network():
 
         self.init_data(csv_path)
         self.init_layers(config_path)
+        self.init_predictions()
         self.save()
         self.inject_macros()
+        self.save()
 
     def init_data(self, csv_path: str):
         df = pd.read_csv(csv_path)
         X = df.iloc[:, :-1].apply(pd.to_numeric)
         y = df.iloc[:, -1].apply(pd.to_numeric)
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.3, random_state=self.random_state)
+            X, y, test_size=0.3, random_state=self.random_state, stratify=y)
 
         train_sheet = self.wb['Training Data']
         train_sheet.append(list(df.columns))
@@ -60,9 +63,24 @@ class Network():
         for i, config in tqdm(enumerate(config['layers']), desc='Initializing weights'):
             sheet = self.wb.create_sheet(f'layer_{i + 1}')
             layer = Layer(config)
-            for row in layer.weights:
+            rows = [list(row) for row in layer.weights]
+            rows[0].append(layer.bias)
+            for row in rows:
                 sheet.append(list(row))
             self.layers.append(layer)
+
+    def init_predictions(self):
+        train_predictions = self.wb.copy_worksheet(self.wb['Training Data'])
+        train_predictions.title = 'Training Predictions'
+        for i in range(1, train_predictions.max_column):
+            column = get_column_letter(i)
+            train_predictions.column_dimensions[column].hidden = True
+
+        test_predictions = self.wb.copy_worksheet(self.wb['Test Data'])
+        test_predictions.title = 'Test Predictions'
+        for i in range(1, test_predictions.max_column):
+            column = get_column_letter(i)
+            test_predictions.column_dimensions[column].hidden = True
 
     def inject_macros(self):
         _file = os.path.abspath(sys.argv[0])
