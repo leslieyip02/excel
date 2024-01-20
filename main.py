@@ -9,7 +9,8 @@ if __name__ == '__main__':
     parser.add_argument('filename')
     args = parser.parse_args()
 
-    random.seed(42)
+    random_state = 42
+    random.seed(random_state)
 
-    network = Network(args.filename, 'config.json')
+    network = Network(args.filename, 'config.json', random_state)
     network.save('tmp')
