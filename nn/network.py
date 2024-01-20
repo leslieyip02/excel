@@ -61,13 +61,16 @@ class Network():
         config = json.load(open(config_path))
         self.layers = []
         for i, config in tqdm(enumerate(config['layers']), desc='Initializing weights'):
-            sheet = self.wb.create_sheet(f'layer_{i + 1}')
+            sheet = self.wb.create_sheet(f'Layer_{i + 1}')
             layer = Layer(config)
             rows = [list(row) for row in layer.weights]
-            rows[0].append(layer.bias)
             for row in rows:
                 sheet.append(list(row))
             self.layers.append(layer)
+
+        self.wb.create_sheet('Bias')
+        for layer in self.layers:
+            self.wb['Bias'].append([layer.bias])
 
     def init_predictions(self):
         train_predictions = self.wb.copy_worksheet(self.wb['Training Data'])
@@ -83,6 +86,10 @@ class Network():
             test_predictions.column_dimensions[column].hidden = True
 
     def inject_macros(self):
+        macros = [layer.macro for layer in self.layers]
+        with open('macros/evaluate.vba', 'r') as file:
+            macros.append(file.read())
+
         _file = os.path.abspath(sys.argv[0])
         path = os.path.join(os.path.dirname(_file), f'{self.filename}.xlsm')
         excel = win32com.client.Dispatch("Excel.Application")
@@ -94,9 +101,9 @@ class Network():
             # https://stackoverflow.com/questions/25638344/programmatic-access-to-visual-basic-project-is-not-trusted
             wb = excel.Workbooks.Open(Filename=path)
 
-            for layer in tqdm(self.layers, desc='Injecting macros'):
+            for macro in tqdm(macros, desc='Injecting macros'):
                 excelModule = wb.VBProject.VBComponents.Add(1)
-                excelModule.CodeModule.AddFromString(layer.macro)
+                excelModule.CodeModule.AddFromString(macro)
                 wb.SaveAs(path)
 
             excel.Workbooks(1).Close(SaveChanges=1)
