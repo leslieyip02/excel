@@ -1,12 +1,15 @@
 import argparse
-import openpyxl
 import pandas as pd
+import random
+from nn.network import *
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('filename')
-
     args = parser.parse_args()
-    df = pd.read_csv(args.filename)
-    print(df.head())
+
+    random.seed(42)
+
+    network = Network(args.filename, 'config.json')
+    network.save('tmp')
