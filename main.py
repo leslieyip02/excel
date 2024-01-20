@@ -1,5 +1,4 @@
 import argparse
-import pandas as pd
 import random
 from nn.network import *
 
@@ -13,4 +12,4 @@ if __name__ == '__main__':
     random.seed(random_state)
 
     network = Network(args.filename, 'config.json', random_state)
-    network.save('tmp')
+    network.save()
