@@ -1,20 +1,22 @@
 Public nLayers As Integer
 Public Activation As Variant
-Public Alpha As Integer
+Public Alpha As Double
 Public Epoch As Integer
 
 Sub Main()
     nLayers = 2
     Activation = Array(1, 2)
-    Alpha = 0.3
-    Epochs = 20
+    Alpha = 0.002
+    Epochs = 160
 
     For i = 1 To Epochs
-        Call Iterate
+        Iterate(i)
     Next i
+
+    Call Predict
 End Sub
 
-Sub Iterate()
+Sub Iterate(epoch as Integer)
     ' Load input data
     Dim nSamples, nFeatures As Integer
     nSamples = Worksheets("Training Data").UsedRange.Rows.Count - 1
@@ -65,13 +67,23 @@ Sub Iterate()
     Dim YTranspose As Variant
     YTranspose = TransposeMatrix(Y)
 
-    ' Get error
+    ' Get loss
+    Dim loss as Double
+    Dim MSE As Double
+    MSE = 0
     ReDim DZ2(nLabels, nSamples) As Double
     For i = 0 To nLabels - 1
         For j = 0 To nSamples - 1
-            DZ2(i, j) = A2(i, j) - YTranspose(i, j)
+            loss = A2(i, j) - YTranspose(i, j)
+            DZ2(i, j) = loss
+            MSE = MSE + loss * loss
         Next j
     Next i
+    MSE = MSE / nSamples
+    If epoch mod 10 = 0 Then
+        Worksheets("Main").Cells(7 + epoch / 10, 2).Value = "loss_" & epoch
+        Worksheets("Main").Cells(7 + epoch / 10, 3).Value = MSE
+    End If
 
     Dim DW2 As Variant
     DW2 = DotProduct(DZ2, TransposeMatrix(A1))
@@ -121,7 +133,6 @@ Sub Iterate()
     nCols = Worksheets("Layer_1").UsedRange.Columns.Count
     For i = 1 To nRows
         For j = 1 To nCols
-            MsgBox DW1(j - 1, i - 1)
             Worksheets("Layer_1").Cells(i, j).Value = Worksheets("Layer_1").Cells(i, j).Value - Alpha * DW1(j - 1, i - 1)
         Next j
     Next i
@@ -131,10 +142,10 @@ Sub Iterate()
     nCols = Worksheets("Layer_2").UsedRange.Columns.Count
     For i = 1 To nRows
         For j = 1 To nCols
-            MsgBox DW2(j - 1, i - 1)
             Worksheets("Layer_2").Cells(i, j).Value = Worksheets("Layer_2").Cells(i, j).Value - Alpha * DW2(j - 1, i - 1)
         Next j
     Next i
+
 End Sub
 
 Function LoadMatrix(sheetName As String) As Double()
@@ -263,3 +274,57 @@ Function DotProduct(matrix1 As Variant, matrix2 As Variant) As Double()
 
     DotProduct = matrix3
 End Function
+
+Sub Predict()
+    ' Load input data
+    Dim Splits as Variant
+    Splits = Array("Training", "Test")
+
+    For Each splitPrefix in Splits
+        Dim nSamples, nFeatures As Integer
+        nSamples = Worksheets(splitprefix & " Data").UsedRange.Rows.Count - 1
+        nFeatures = Worksheets(splitprefix & " Data").UsedRange.Columns.Count - 1
+        ReDim X(nFeatures, nSamples) As Double
+        ' Transpose
+        ' -1 sample since last index is the actual label
+        For i = 1 To nFeatures - 1
+            For j = 1 To nSamples
+                X(i - 1, j - 1) = Worksheets(splitprefix & " Data").Cells(j + 1, i).Value
+            Next j
+        Next i
+
+        ' Forward Prop
+        ' Didn't manage to wrap in a function
+        Dim A1 As Variant
+        A1 = ForwardStep(X, 1)
+
+        Dim A2 As Variant
+        A2 = ForwardStep(A1, 2)
+
+        ' Get maximum confidence value per sample
+        Dim nLabels, predictedIndex As Integer
+        nLabels = UBound(A2, 1)
+
+        ReDim Predictions(nSamples) As Integer
+        For i = 0 to nSamples - 1
+            predictedIndex = 0
+            For j = 1 to nLabels
+                If A2(j, i) > A2(predictedIndex, i) Then
+                    predictedIndex = j
+                End If
+            Next j
+            Predictions(i) = predictedIndex
+        Next i
+
+        Dim splitPredictions As String
+        splitPredictions = splitprefix & " Predictions"
+        nCol = Worksheets(splitPredictions).UsedRange.Columns.Count
+        Worksheets(splitPredictions).Cells(1, nCol + 1).Value = "predictions"
+        For i = 1 To nSamples
+            Worksheets(splitPredictions).Cells(i + 1, nCol + 1).Value = Predictions(i - 1)
+        Next i
+
+        Call ConfusionMatrix(splitPredictions)
+
+    Next splitPrefix
+End Sub

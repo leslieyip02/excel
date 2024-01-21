@@ -1,8 +1,8 @@
-Function confusionMatrix(sheetName As String)
+Sub ConfusionMatrix(sheetName As String)
     Worksheets(sheetName).Activate
     Dim nRow, nCol, predictionColumn, actualColumn As Integer
-    nRow = ActiveSheet.UsedRange.Rows.Count
-    nCol = ActiveSheet.UsedRange.Columns.Count
+    nRow = Worksheets(sheetName).UsedRange.Rows.Count
+    nCol = Worksheets(sheetName).UsedRange.Columns.Count
 
     predictionColumn = nCol
     actualColumn = nCol - 1
@@ -54,6 +54,7 @@ Function confusionMatrix(sheetName As String)
 
     For a = 1 To i
         tp = Cells(row + a, col + a).Value
+        Cells(row + a, col + a).Interior.Color = vbGreen
         fp = 0
         fn = 0
         For b = 1 To i
@@ -90,4 +91,6 @@ Function confusionMatrix(sheetName As String)
         Cells(currentRow, col + 1).Value = f1
         currentRow = currentRow + 1
     Next a
-End Function
+End Sub
+
+

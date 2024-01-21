@@ -1,7 +1,7 @@
 {
     "layers": [
         {
-            "input_size": 34,
+            "input_size": 12,
             "output_size": 2,
             "activation_function": "relu"
         },

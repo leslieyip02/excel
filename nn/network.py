@@ -109,7 +109,7 @@ class Network():
         #                     f'Public Epoch As Integer\n')
         # macros.append(global_variables)
 
-        # # inject constants
+        # inject constants
         # epochs = self.configs.get('epochs', 10)
         # alpha = self.configs.get('alpha', 0.1)
         # constants = (f'Sub InitParams()\n'

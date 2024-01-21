@@ -5,3 +5,9 @@ Excel is everyone's favorite spreadsheets app. From running Doom to 3D physics e
 ### Strategy
 
 We will be implementing a Python script that converts preprocessed `.csv` files into a neural network. All calculations will be performed within Excel using VBA.
+
+### Usage
+
+```
+python3 main.py data/test.csv configs/test.json
+```

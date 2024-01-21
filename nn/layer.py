@@ -15,6 +15,6 @@ class Layer():
     def __init__(self, config) -> None:
         input_size = config['input_size']
         output_size = config['output_size']
-        self.weights = (np.random.rand(input_size, output_size) - 0.5) * 2.0
+        self.weights = np.random.rand(input_size, output_size) - 0.25
         self.bias = np.ones((input_size,))
         self.macro = Layer.activation_function_indices[config['activation_function']]
