@@ -2,18 +2,15 @@
     "layers": [
         {
             "input_size": 34,
-            "output_size": 32,
+            "output_size": 2,
             "activation_function": "relu"
         },
         {
-            "input_size": 32,
-            "output_size": 8,
-            "activation_function": "relu"
-        },
-        {
-            "input_size": 8,
+            "input_size": 2,
             "output_size": 2,
             "activation_function": "softmax"
         }
-    ]
+    ],
+    "epochs": 16,
+    "alpha": 0.8
 }

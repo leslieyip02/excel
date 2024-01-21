@@ -60,11 +60,11 @@ class Network():
             test_sheet.append(row)
 
     def init_layers(self, config_path):
-        config = json.load(open(config_path))
+        self.configs = json.load(open(config_path))
         self.layers = []
         max_input_size = 0
         previous_layer_output_size = self.input_size
-        for i, config in tqdm(enumerate(config['layers']), desc='Initializing weights'):
+        for i, config in tqdm(enumerate(self.configs['layers']), desc='Initializing weights'):
             max_input_size = max(config['input_size'], max_input_size)
             if config['input_size'] != previous_layer_output_size:
                 raise ValueError('Bad input_size/output_size.')
@@ -83,9 +83,9 @@ class Network():
                 self.wb['Bias'].cell(row=(j + 1), column=(i + 1)).value = bias
 
         for i in range(len(self.layers)):
-            self.wb.create_sheet(f'A_{i + 1}')
-        for i in range(len(self.layers)):
             self.wb.create_sheet(f'Z_{i + 1}')
+        for i in range(len(self.layers)):
+            self.wb.create_sheet(f'A_{i + 1}')
 
     def init_predictions(self):
         train_predictions = self.wb.copy_worksheet(self.wb['Training Data'])
@@ -103,13 +103,20 @@ class Network():
     def inject_macros(self):
         macros = []
 
-        # inject constants
-        funct_types = [str(layer.macro) for layer in self.layers]
-        constants = (f'Public FunctType({len(self.layers)}) As Integer\n'
-                     f'Sub InitFunctType()\n'
-                     f'    FunctType = Array({",".join(funct_types)})\n'
-                     f'End Sub')
-        macros.append(constants)
+        # global_variables = (f'Public nLayers As Integer\n'
+        #                     f'Public Activation As Variant\n'
+        #                     f'Public Alpha As Integer\n'
+        #                     f'Public Epoch As Integer\n')
+        # macros.append(global_variables)
+
+        # # inject constants
+        # epochs = self.configs.get('epochs', 10)
+        # alpha = self.configs.get('alpha', 0.1)
+        # constants = (f'Sub InitParams()\n'
+        #              f'    Epochs = {epochs}\n'
+        #              f'    Alpha = {alpha}\n'
+        #              f'End Sub')
+        # macros.append(constants)
 
         for file in os.listdir('macros'):
             with open(f'macros/{file}', 'r') as file:
