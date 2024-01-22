@@ -6,6 +6,8 @@ Public Epoch As Integer
 Sub Main()
     nLayers = 2
     Activation = Array(1, 2)
+
+    ' Configure learning rate and epochs here
     Alpha = 0.002
     Epochs = 160
 
@@ -85,6 +87,7 @@ Sub Iterate(epoch as Integer)
         Worksheets("Main").Cells(7 + epoch / 10, 3).Value = MSE
     End If
 
+    ' Differentiate wrt to 2nd layer weights
     Dim DW2 As Variant
     DW2 = DotProduct(DZ2, TransposeMatrix(A1))
     Dim nRows, nCols As Integer
@@ -101,6 +104,7 @@ Sub Iterate(epoch as Integer)
     Dim W2 As Variant
     W2 = LoadMatrix("Layer_2")
 
+    ' Differentiate wrt to 1st layer weights
     Dim DZ1 As Variant
     DZ1 = DotProduct(TransposeMatrix(W2), DZ2)
     nRows = UBound(DZ1, 1)
@@ -206,6 +210,7 @@ Function ForwardStep(inputMatrix As Variant, sheetIndex As Integer) As Double()
 
     nColsInput = UBound(inputMatrix, 2)
 
+    ' Z is the result of applying weights to input
     Dim Z As Variant
     Z = DotProduct(TransposeMatrix(weightMatrix), inputMatrix)
 
@@ -245,6 +250,7 @@ Function ForwardStep(inputMatrix As Variant, sheetIndex As Integer) As Double()
         Next j
     Next i
 
+    ' A is for values after activation
     ' Save for A sheet
     sheetName = "A_" + CStr(sheetIndex)
     For i = 1 To nCols
@@ -324,6 +330,7 @@ Sub Predict()
             Worksheets(splitPredictions).Cells(i + 1, nCol + 1).Value = Predictions(i - 1)
         Next i
 
+        ' Calculate accuracy, precision, recall, f1 and create a confusion matrix
         Call ConfusionMatrix(splitPredictions)
 
     Next splitPrefix
