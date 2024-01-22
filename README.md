@@ -2,7 +2,7 @@
 
 ![XCelBoost: Excel Neural Network](graphics/cover.png)
 
-*[Devpost](https://devpost.com/software/606786?flow%5Bdata%5D%5Binvitation_key%5D=uENBh4iaTSvxqbgX7sjR&flow%5Bname%5D=accept_software_invitation&ref_content=new_user_added_to_software_team&ref_feature=portfolio&ref_medium=email&utm_campaign=software&utm_content=invitation_to_join_software_team&utm_medium=email&utm_source=transactional)*
+*[Devpost](https://devpost.com/software/xcelboost)*
 
 Completed with [@casperngeen](https://github.com/casperngeen), [@CreditableX](https://github.com/CreditableX) and [@pqienso](https://github.com/pqienso).
 
